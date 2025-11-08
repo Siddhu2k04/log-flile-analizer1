@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyze Log File</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    async function loadResult(type) {
+      document.getElementById("buttons").style.display = "none";
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "<p>Loading...</p>";
+
+      if (type === 'time') {
+        resultDiv.innerHTML = `
+          <div class='result-box'>
+            <h3>Enter Time Range</h3>
+            <form onsubmit="return submitTimeRange(event)">
+              <input type="text" id="start" placeholder="Start (YYYY-MM-DD HH:MM:SS)" required>
+              <input type="text" id="end" placeholder="End (YYYY-MM-DD HH:MM:SS)" required>
+              <button type="submit">Search</button>
+            </form>
+            <div id="timeResult"></div>
+            <button onclick="goBack()">⬅ Back</button>
+          </div>
+        `;
+      } else {
+        const response = await fetch("/" + type);
+        const data = await response.text();
+        resultDiv.innerHTML = data;
+      }
+    }
+
+    async function submitTimeRange(event) {
+      event.preventDefault();
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+      const response = await fetch("/time_range", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ start, end })
+      });
+      const data = await response.text();
+      document.getElementById("timeResult").innerHTML = data;
+    }
+
+    function goBack() {
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("buttons").style.display = "block";
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Log File Analyzer</h1>
+    <div id="buttons">
+      <button onclick="loadResult('top_active')">Top Active User</button>
+      <button onclick="loadResult('suspicious')">Suspicious Users</button>
+      <button onclick="loadResult('time')">Time Range Query</button>
+    </div>
+    <div id="result"></div>
+  </div>
+</body>
+</html>
